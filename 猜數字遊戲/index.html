@@ -425,6 +425,10 @@
     let videoIndex = 0;
     const scareVideos = ['scare-1-compatible.mp4', 'scare-2-compatible.mp4'];
     const groundhogClip = '57a03e30-2cc5-40ad-a245-448862f7343e.mp4';
+    const backgroundMusic = new Audio('../../AI/34b6c8a2-7476-41d2-b5b6-a5fb6417ca9f.mp4');
+    backgroundMusic.loop = true;
+    backgroundMusic.preload = 'auto';
+    backgroundMusic.volume = 0.5;
     let audioContext;
     let musicNodes = [];
     let musicGain;
@@ -436,6 +440,10 @@
     let scareResetTimer = null;
 
     function stopAudio() {
+      if (backgroundMusic) {
+        backgroundMusic.pause();
+        backgroundMusic.currentTime = 0;
+      }
       if (musicGain && audioContext) {
         const now = audioContext.currentTime;
         musicGain.gain.cancelScheduledValues(now);
@@ -451,42 +459,9 @@
     }
 
     function playSoftMusic() {
-      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
-      audioContext.resume();
-      if (musicGain) return;
-      const now = audioContext.currentTime;
-      musicGain = audioContext.createGain();
-      musicGain.gain.setValueAtTime(0.001, now);
-      musicGain.gain.exponentialRampToValueAtTime(0.055, now + 0.8);
-      musicGain.connect(audioContext.destination);
-
-      [130.81, 196, 261.63].forEach((frequency, index) => {
-        const oscillator = audioContext.createOscillator();
-        oscillator.type = index === 0 ? 'triangle' : 'sine';
-        oscillator.frequency.value = frequency;
-        oscillator.detune.value = index * 5;
-        oscillator.connect(musicGain);
-        oscillator.start(now);
-        musicNodes.push(oscillator);
-      });
-
-      const notes = [261.63, 329.63, 392, 329.63];
-      let noteIndex = 0;
-      musicTimer = setInterval(() => {
-        if (!audioContext || !musicGain) return;
-        const note = audioContext.createOscillator();
-        const noteGain = audioContext.createGain();
-        const start = audioContext.currentTime;
-        note.type = 'sine';
-        note.frequency.value = notes[noteIndex++ % notes.length];
-        noteGain.gain.setValueAtTime(0.001, start);
-        noteGain.gain.exponentialRampToValueAtTime(0.08, start + 0.08);
-        noteGain.gain.exponentialRampToValueAtTime(0.001, start + 1.15);
-        note.connect(noteGain);
-        noteGain.connect(musicGain);
-        note.start(start);
-        note.stop(start + 1.2);
-      }, 900);
+      if (!backgroundMusic) return;
+      backgroundMusic.volume = 0.5;
+      backgroundMusic.play().catch(() => {});
     }
 
     function playScareNoise() {
@@ -516,9 +491,7 @@
       if (scareRunning) return;
       scareRunning = true;
       jumpscare.classList.remove('show');
-      void jumpscare.offsetWidth;
-      jumpscare.classList.add('show');
-      jumpscare.setAttribute('aria-hidden', 'false');
+      jumpscare.setAttribute('aria-hidden', 'true');
       if (musicGain) stopAudio();
       videoIndex = 0;
       playScareVideo();
@@ -529,8 +502,6 @@
       stopAudio();
       jumpscareVideo.pause();
       jumpscareVideo.currentTime = 0;
-      jumpscareVideo.removeAttribute('src');
-      jumpscareVideo.load();
       jumpscare.classList.remove('show');
       jumpscare.setAttribute('aria-hidden', 'true');
       jumpscareText.style.opacity = '1';
@@ -539,14 +510,18 @@
 
     function playScareVideo() {
       const source = scareVideos[videoIndex];
-      jumpscareVideo.pause();
-      jumpscareVideo.removeAttribute('src');
-      jumpscareVideo.src = source;
-      jumpscareVideo.load();
+      if (jumpscareVideo.getAttribute('src') !== source) {
+        jumpscareVideo.src = source;
+      }
       jumpscareVideo.muted = false;
       jumpscareVideo.volume = 1;
       jumpscareVideo.currentTime = 0;
-      jumpscareVideo.play().catch(() => {});
+      jumpscareVideo.play()
+        .then(() => {
+          jumpscare.classList.add('show');
+          jumpscare.setAttribute('aria-hidden', 'false');
+        })
+        .catch(() => {});
     }
 
     function playGroundhogInterrupt() {
@@ -579,8 +554,10 @@
       clearTimeout(scareResetTimer);
       jumpscareVideo.pause();
       jumpscareVideo.currentTime = 0;
-      jumpscareVideo.removeAttribute('src');
-      jumpscareVideo.load();
+      if (backgroundMusic) {
+        backgroundMusic.pause();
+        backgroundMusic.currentTime = 0;
+      }
       attemptsText.textContent = attempts;
       lastMessageText = '準備好了嗎？輸入一個數字開始遊戲。';
       lastMessageClass = 'message';
