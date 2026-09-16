@@ -403,7 +403,7 @@
 
   <div class="interrupt-overlay" id="interrupt-overlay" aria-hidden="true">
     <div class="interrupt-text" id="interrupt-text"><span>就叫你填1-100</span><br><span>你填那三小</span></div>
-    <video id="interrupt-video" src="57a03e30-2cc5-40ad-a245-448862f7343e.mp4?v=1" playsinline preload="auto" aria-label="土撥鼠影片"></video>
+    <video id="interrupt-video" src="57a03e30-2cc5-40ad-a245-448862f7343e.mp4" playsinline preload="auto" aria-label="土撥鼠影片"></video>
   </div>
 
   <script>
@@ -424,7 +424,7 @@
     let finished;
     let videoIndex = 0;
     const scareVideos = ['scare-1-compatible.mp4', 'scare-2-compatible.mp4'];
-    const groundhogClip = '57a03e30-2cc5-40ad-a245-448862f7343e.mp4?v=' + Date.now();
+    const groundhogClip = '57a03e30-2cc5-40ad-a245-448862f7343e.mp4';
     let audioContext;
     let musicNodes = [];
     let musicGain;
@@ -557,16 +557,17 @@
 
       interruptText.innerHTML = '<span>就叫你填1-100</span><br><span>你填那三小</span>';
       interruptOverlay.classList.remove('show');
-      void interruptOverlay.offsetWidth;
-      interruptOverlay.classList.add('show');
-      interruptOverlay.setAttribute('aria-hidden', 'false');
-
-      interruptVideo.src = groundhogClip + '&t=' + Date.now();
-      interruptVideo.load();
+      interruptOverlay.setAttribute('aria-hidden', 'true');
       interruptVideo.muted = false;
       interruptVideo.volume = 1;
       interruptVideo.currentTime = 0;
-      interruptVideo.play().catch(() => {});
+
+      interruptVideo.play()
+        .then(() => {
+          interruptOverlay.classList.add('show');
+          interruptOverlay.setAttribute('aria-hidden', 'false');
+        })
+        .catch(() => {});
     }
 
     function startGame() {
@@ -652,6 +653,12 @@
         startGame();
       }, 150);
     });
+    interruptVideo.addEventListener('playing', () => {
+      if (!interruptActive) return;
+      interruptOverlay.classList.add('show');
+      interruptOverlay.setAttribute('aria-hidden', 'false');
+    });
+
     interruptVideo.addEventListener('ended', () => {
       interruptOverlay.classList.remove('show');
       interruptOverlay.setAttribute('aria-hidden', 'true');
