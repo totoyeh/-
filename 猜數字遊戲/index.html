@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>猜數字遊戲</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Noto+Sans+TC:wght@400;600;700;900&display=swap');
+
+    :root {
+      --ink: #3f3153;
+      --muted: #81758c;
+      --paper: #fffdf9;
+      --lavender: #eee8ff;
+      --coral: #ff8066;
+      --coral-dark: #e96354;
+      --mint: #bcefe1;
+      --yellow: #ffd66b;
+      --line: #e6dced;
+      --shadow: 0 24px 60px rgba(100, 75, 125, 0.18);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px 20px;
+      color: var(--ink);
+      background-color: #dff8f1;
+      background-image:
+        radial-gradient(circle at 8% 12%, rgba(255, 214, 107, 0.75) 0 34px, transparent 35px),
+        radial-gradient(circle at 92% 18%, rgba(255, 128, 102, 0.38) 0 70px, transparent 71px),
+        radial-gradient(circle at 78% 92%, rgba(199, 184, 255, 0.5) 0 110px, transparent 111px),
+        linear-gradient(145deg, #fff4d8 0%, #e1f8f2 54%, #e8e1ff 100%);
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    .game {
+      width: min(100%, 560px);
+      overflow: hidden;
+      border: 6px solid #fff;
+      border-radius: 32px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      animation: rise 600ms ease-out both;
+    }
+
+    .header {
+      position: relative;
+      padding: 40px 42px 34px;
+      color: #fff;
+      background: var(--lavender);
+      isolation: isolate;
+    }
+
+    .header::before,
+    .header::after {
+      content: "";
+      position: absolute;
+      z-index: -1;
+      border-radius: 50%;
+    }
+
+    .header::before {
+      right: 34px;
+      top: 28px;
+      width: 92px;
+      height: 92px;
+      background: var(--yellow);
+      box-shadow: 0 0 0 12px rgba(255, 255, 255, 0.3);
+    }
+
+    .header::after {
+      right: 67px;
+      top: 60px;
+      width: 10px;
+      height: 10px;
+      background: var(--ink);
+      box-shadow: 28px 0 var(--ink), 14px 20px var(--ink);
+    }
+
+    .eyebrow {
+      display: inline-block;
+      margin: 0 0 12px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      color: #8f5a00;
+      background: var(--yellow);
+      font-family: "Baloo 2", sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    h1 {
+      margin: 0;
+      color: var(--ink);
+      font-family: "Baloo 2", "Noto Sans TC", sans-serif;
+      font-size: clamp(3.2rem, 12vw, 5rem);
+      font-weight: 700;
+      line-height: 0.9;
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      max-width: 330px;
+      margin: 18px 0 0;
+      color: #655778;
+      font-size: 0.98rem;
+      line-height: 1.8;
+    }
+
+    .content { padding: 34px 42px 38px; }
+
+    .range {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 600;
+    }
+
+    .range strong {
+      padding: 7px 13px;
+      border-radius: 999px;
+      color: #287b6d;
+      background: var(--mint);
+      font-family: "Baloo 2", sans-serif;
+      font-size: 1.05rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 10px;
+      color: var(--ink);
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .input-row { display: flex; gap: 12px; }
+
+    input {
+      min-width: 0;
+      flex: 1;
+      padding: 15px 18px;
+      border: 3px solid var(--line);
+      border-radius: 16px;
+      color: var(--ink);
+      background: #fff;
+      font: 600 1.35rem "Baloo 2", "Noto Sans TC", sans-serif;
+      outline: none;
+      transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    }
+
+    input:focus {
+      border-color: var(--mint);
+      box-shadow: 0 0 0 5px rgba(188, 239, 225, 0.65);
+      transform: translateY(-2px);
+    }
+
+    button {
+      border: 0;
+      border-radius: 16px;
+      padding: 0 24px;
+      color: #fff;
+      background: var(--coral);
+      cursor: pointer;
+      font: 700 1rem "Noto Sans TC", sans-serif;
+      box-shadow: 0 5px 0 var(--coral-dark);
+      transition: transform 180ms ease, background 180ms ease, box-shadow 180ms ease;
+    }
+
+    button:hover { background: #ff967e; transform: translateY(-2px); box-shadow: 0 7px 0 var(--coral-dark); }
+    button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--coral-dark); }
+    button:focus-visible { outline: 4px solid rgba(255, 214, 107, 0.8); outline-offset: 3px; }
+
+    .message {
+      min-height: 86px;
+      display: grid;
+      place-items: center;
+      margin: 28px 0 22px;
+      padding: 16px 20px;
+      border: 3px dashed var(--line);
+      border-radius: 20px;
+      color: var(--muted);
+      background: #fffaf0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    .message.success { border-color: #7fd4bd; color: #287b6d; background: #e7fbf4; }
+    .message.hint { border-color: #ffc0a9; color: #bc5f4c; background: #fff0ea; }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .footer strong {
+      color: var(--ink);
+      font-family: "Baloo 2", sans-serif;
+      font-size: 1.2rem;
+    }
+
+    .reset {
+      padding: 8px 14px;
+      color: #6e5b99;
+      background: #f0ebff;
+      box-shadow: none;
+      font-size: 0.88rem;
+    }
+
+    .reset:hover { color: var(--ink); background: #e2d9ff; box-shadow: none; }
+
+    .jumpscare {
+      position: fixed;
+      z-index: 10;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: #050505;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .jumpscare.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .jumpscare-text {
+      position: absolute;
+      left: 50%;
+      bottom: 21%;
+      transform: translateX(-50%);
+      z-index: 2;
+      color: #ff2c2c;
+      font-family: "Baloo 2", "Noto Sans TC", sans-serif;
+      font-size: clamp(3.1rem, 6vw, 7.2rem);
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      line-height: 1;
+      text-shadow: 0 0 18px rgba(255, 44, 44, 0.95), 0 0 32px rgba(255, 44, 44, 0.8), 0 0 54px rgba(255, 134, 134, 0.7);
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+      animation: textFlash 0.7s ease-in-out infinite alternate;
+    }
+
+    @keyframes textFlash {
+      0% {
+        opacity: 0.8;
+        transform: translateX(-50%) scale(0.97);
+      }
+      50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.06);
+      }
+      100% {
+        opacity: 0.9;
+        transform: translateX(-50%) scale(1);
+      }
+    }
+
+    .jumpscare video {
+      position: relative;
+      z-index: 0;
+      width: min(90vw, 720px);
+      max-height: 88vh;
+      object-fit: contain;
+      filter: contrast(1.35) saturate(0.7);
+      cursor: pointer;
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .interrupt-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease;
+    }
+
+    .interrupt-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .interrupt-overlay video {
+      position: relative;
+      z-index: 0;
+      width: min(90vw, 720px);
+      max-height: 88vh;
+      object-fit: contain;
+      background: #000;
+      cursor: pointer;
+    }
+
+    .interrupt-text {
+      position: absolute;
+      left: 50%;
+      bottom: 18%;
+      transform: translateX(-50%);
+      z-index: 2;
+      color: #ff2c2c;
+      font-family: "Baloo 2", "Noto Sans TC", sans-serif;
+      font-size: clamp(2.2rem, 4vw, 5rem);
+      font-weight: 900;
+      letter-spacing: 0.06em;
+      line-height: 1.2;
+      text-align: center;
+      text-shadow: 0 0 18px rgba(255, 44, 44, 0.9), 0 0 32px rgba(255, 44, 44, 0.8);
+      white-space: normal;
+      max-width: min(90vw, 1000px);
+      pointer-events: none;
+      user-select: none;
+      animation: interruptFlash 0.7s ease-in-out infinite alternate;
+    }
+
+    .interrupt-text span {
+      white-space: nowrap;
+    }
+
+    @keyframes interruptFlash {
+      0% {
+        opacity: 0.7;
+        transform: translateX(-50%) scale(0.98);
+      }
+      50% {
+        opacity: 1;
+        transform: translateX(-50%) scale(1.04);
+      }
+      100% {
+        opacity: 0.9;
+        transform: translateX(-50%) scale(1);
+      }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 440px) {
+      body { padding: 16px 12px; }
+      .game { border-width: 4px; border-radius: 26px; }
+      .header, .content { padding-left: 24px; padding-right: 24px; }
+      .header { padding-top: 32px; }
+      .header::before { right: 22px; top: 26px; width: 66px; height: 66px; }
+      .header::after { right: 45px; top: 49px; transform: scale(0.75); }
+      .input-row { flex-direction: column; }
+      button { min-height: 52px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="game">
+    <header class="header">
+      <p class="eyebrow">A little challenge</p>
+      <h1>猜數字</h1>
+      <p class="subtitle">我已經想好一個數字，試著用最少次數把它找出來吧！建議開聲音</p>
+    </header>
+
+    <section class="content">
+      <div class="range"><span>答案範圍</span><strong>1 - 100</strong></div>
+      <label for="guess">輸入你的猜測</label>
+      <form class="input-row" id="guess-form">
+        <input id="guess" name="guess" type="text" inputmode="numeric" placeholder="例如：50" autofocus>
+        <button type="submit">猜一猜</button>
+      </form>
+
+      <div class="message" id="message" role="status" aria-live="polite">準備好了嗎？輸入一個數字開始遊戲。</div>
+
+      <div class="footer">
+        <span>猜測次數：<strong id="attempts">0</strong></span>
+        <button class="reset" id="reset" type="button">重新開始</button>
+      </div>
+    </section>
+  </main>
+
+  <div class="jumpscare" id="jumpscare" aria-hidden="true">
+    <div class="jumpscare-text" id="jumpscare-text">恭喜答對</div>
+    <video id="jumpscare-video" src="scare-1-compatible.mp4" playsinline preload="auto" aria-label="驚嚇影片"></video>
+  </div>
+
+  <div class="interrupt-overlay" id="interrupt-overlay" aria-hidden="true">
+    <div class="interrupt-text" id="interrupt-text"><span>就叫你填1-100</span><br><span>你填那三小</span></div>
+    <video id="interrupt-video" src="57a03e30-2cc5-40ad-a245-448862f7343e.mp4?v=1" playsinline preload="auto" aria-label="土撥鼠影片"></video>
+  </div>
+
+  <script>
+    const form = document.querySelector('#guess-form');
+    const input = document.querySelector('#guess');
+    const message = document.querySelector('#message');
+    const attemptsText = document.querySelector('#attempts');
+    const resetButton = document.querySelector('#reset');
+    const jumpscare = document.querySelector('#jumpscare');
+    const jumpscareVideo = document.querySelector('#jumpscare-video');
+    const jumpscareText = document.querySelector('#jumpscare-text');
+    const interruptOverlay = document.querySelector('#interrupt-overlay');
+    const interruptVideo = document.querySelector('#interrupt-video');
+    const interruptText = document.querySelector('#interrupt-text');
+
+    let answer;
+    let attempts;
+    let finished;
+    let videoIndex = 0;
+    const scareVideos = ['scare-1-compatible.mp4', 'scare-2-compatible.mp4'];
+    const groundhogClip = '57a03e30-2cc5-40ad-a245-448862f7343e.mp4?v=' + Date.now();
+    let audioContext;
+    let musicNodes = [];
+    let musicGain;
+    let musicTimer;
+    let lastMessageText = '準備好了嗎？輸入一個數字開始遊戲。';
+    let lastMessageClass = 'message';
+    let interruptActive = false;
+    let scareRunning = false;
+    let scareResetTimer = null;
+
+    function stopAudio() {
+      if (musicGain && audioContext) {
+        const now = audioContext.currentTime;
+        musicGain.gain.cancelScheduledValues(now);
+        musicGain.gain.setTargetAtTime(0.001, now, 0.12);
+      }
+      clearInterval(musicTimer);
+      musicTimer = null;
+      musicNodes.forEach((node) => {
+        try { node.stop(); } catch (error) { }
+      });
+      musicNodes = [];
+      musicGain = null;
+    }
+
+    function playSoftMusic() {
+      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+      audioContext.resume();
+      if (musicGain) return;
+      const now = audioContext.currentTime;
+      musicGain = audioContext.createGain();
+      musicGain.gain.setValueAtTime(0.001, now);
+      musicGain.gain.exponentialRampToValueAtTime(0.055, now + 0.8);
+      musicGain.connect(audioContext.destination);
+
+      [130.81, 196, 261.63].forEach((frequency, index) => {
+        const oscillator = audioContext.createOscillator();
+        oscillator.type = index === 0 ? 'triangle' : 'sine';
+        oscillator.frequency.value = frequency;
+        oscillator.detune.value = index * 5;
+        oscillator.connect(musicGain);
+        oscillator.start(now);
+        musicNodes.push(oscillator);
+      });
+
+      const notes = [261.63, 329.63, 392, 329.63];
+      let noteIndex = 0;
+      musicTimer = setInterval(() => {
+        if (!audioContext || !musicGain) return;
+        const note = audioContext.createOscillator();
+        const noteGain = audioContext.createGain();
+        const start = audioContext.currentTime;
+        note.type = 'sine';
+        note.frequency.value = notes[noteIndex++ % notes.length];
+        noteGain.gain.setValueAtTime(0.001, start);
+        noteGain.gain.exponentialRampToValueAtTime(0.08, start + 0.08);
+        noteGain.gain.exponentialRampToValueAtTime(0.001, start + 1.15);
+        note.connect(noteGain);
+        noteGain.connect(musicGain);
+        note.start(start);
+        note.stop(start + 1.2);
+      }, 900);
+    }
+
+    function playScareNoise() {
+      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioContext.currentTime;
+      const oscillator = audioContext.createOscillator();
+      const gain = audioContext.createGain();
+      const filter = audioContext.createBiquadFilter();
+      oscillator.type = 'sawtooth';
+      oscillator.frequency.setValueAtTime(75, now);
+      oscillator.frequency.exponentialRampToValueAtTime(620, now + 0.11);
+      oscillator.frequency.exponentialRampToValueAtTime(48, now + 0.9);
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(900, now);
+      filter.frequency.exponentialRampToValueAtTime(180, now + 0.9);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.exponentialRampToValueAtTime(0.5, now + 0.025);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+      oscillator.connect(filter);
+      filter.connect(gain);
+      gain.connect(audioContext.destination);
+      oscillator.start(now);
+      oscillator.stop(now + 1.05);
+    }
+
+    function showJumpscare() {
+      if (scareRunning) return;
+      scareRunning = true;
+      jumpscare.classList.remove('show');
+      void jumpscare.offsetWidth;
+      jumpscare.classList.add('show');
+      jumpscare.setAttribute('aria-hidden', 'false');
+      if (musicGain) stopAudio();
+      videoIndex = 0;
+      playScareVideo();
+    }
+
+    function hideJumpscare() {
+      clearTimeout(scareResetTimer);
+      stopAudio();
+      jumpscareVideo.pause();
+      jumpscareVideo.currentTime = 0;
+      jumpscareVideo.removeAttribute('src');
+      jumpscareVideo.load();
+      jumpscare.classList.remove('show');
+      jumpscare.setAttribute('aria-hidden', 'true');
+      jumpscareText.style.opacity = '1';
+      scareRunning = false;
+    }
+
+    function playScareVideo() {
+      const source = scareVideos[videoIndex];
+      jumpscareVideo.pause();
+      jumpscareVideo.removeAttribute('src');
+      jumpscareVideo.src = source;
+      jumpscareVideo.load();
+      jumpscareVideo.muted = false;
+      jumpscareVideo.volume = 1;
+      jumpscareVideo.currentTime = 0;
+      jumpscareVideo.play().catch(() => {});
+    }
+
+    function playGroundhogInterrupt() {
+      if (finished || interruptActive) return;
+      interruptActive = true;
+      lastMessageText = message.textContent || '準備好了嗎？輸入一個數字開始遊戲。';
+      lastMessageClass = message.className || 'message';
+
+      interruptText.innerHTML = '<span>就叫你填1-100</span><br><span>你填那三小</span>';
+      interruptOverlay.classList.remove('show');
+      void interruptOverlay.offsetWidth;
+      interruptOverlay.classList.add('show');
+      interruptOverlay.setAttribute('aria-hidden', 'false');
+
+      interruptVideo.src = groundhogClip + '&t=' + Date.now();
+      interruptVideo.load();
+      interruptVideo.muted = false;
+      interruptVideo.volume = 1;
+      interruptVideo.currentTime = 0;
+      interruptVideo.play().catch(() => {});
+    }
+
+    function startGame() {
+      answer = Math.floor(Math.random() * 100) + 1;
+      attempts = 0;
+      finished = false;
+      interruptActive = false;
+      scareRunning = false;
+      clearTimeout(scareResetTimer);
+      jumpscareVideo.pause();
+      jumpscareVideo.currentTime = 0;
+      jumpscareVideo.removeAttribute('src');
+      jumpscareVideo.load();
+      attemptsText.textContent = attempts;
+      lastMessageText = '準備好了嗎？輸入一個數字開始遊戲。';
+      lastMessageClass = 'message';
+      message.textContent = lastMessageText;
+      message.className = lastMessageClass;
+      interruptOverlay.classList.remove('show');
+      interruptVideo.pause();
+      interruptVideo.currentTime = 0;
+      input.value = '';
+      input.disabled = false;
+      input.focus();
+    }
+
+    form.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (finished) return;
+
+      const guess = Number(input.value);
+      if (!Number.isInteger(guess) || guess < 1 || guess > 100) {
+        message.textContent = '請輸入 1 到 100 之間的整數。';
+        message.className = 'message hint';
+        input.focus();
+        playGroundhogInterrupt();
+        return;
+      }
+
+      attempts += 1;
+      attemptsText.textContent = attempts;
+
+      if (guess === answer) {
+        message.textContent = `恭喜猜中！答案就是 ${answer}！`;
+        message.className = 'message success';
+        finished = true;
+        input.disabled = true;
+        showJumpscare();
+      } else {
+        lastMessageText = message.textContent;
+        lastMessageClass = message.className;
+        if (guess < answer) {
+          message.textContent = '猜錯了，答案比你猜的數字大！';
+          message.className = 'message hint';
+          input.select();
+        } else {
+          message.textContent = '猜錯了，答案比你猜的數字小！';
+          message.className = 'message hint';
+          input.select();
+        }
+
+      }
+    });
+
+    resetButton.addEventListener('click', startGame);
+    input.addEventListener('input', playSoftMusic, { once: true });
+    resetButton.addEventListener('click', playSoftMusic);
+    jumpscareVideo.addEventListener('click', () => {
+      if (!scareRunning) return;
+      videoIndex = (videoIndex + 1) % scareVideos.length;
+      playScareVideo();
+    });
+    jumpscareVideo.addEventListener('ended', () => {
+      if (!scareRunning) return;
+      hideJumpscare();
+      scareResetTimer = setTimeout(() => {
+        startGame();
+      }, 150);
+    });
+    jumpscareVideo.addEventListener('error', () => {
+      hideJumpscare();
+      scareResetTimer = setTimeout(() => {
+        startGame();
+      }, 150);
+    });
+    interruptVideo.addEventListener('ended', () => {
+      interruptOverlay.classList.remove('show');
+      interruptOverlay.setAttribute('aria-hidden', 'true');
+      interruptVideo.pause();
+      interruptVideo.currentTime = 0;
+
+      const restoreText = lastMessageText || '準備好了嗎？輸入一個數字開始遊戲。';
+      const restoreClass = lastMessageClass || 'message';
+      message.textContent = '沒事，你繼續';
+      message.className = 'message hint';
+
+      setTimeout(() => {
+        if (!finished) {
+          message.textContent = restoreText;
+          message.className = restoreClass;
+          interruptActive = false;
+        }
+      }, 2000);
+    });
+    startGame();
+  </script>
+</body>
+</html>
