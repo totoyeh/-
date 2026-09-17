@@ -56,30 +56,76 @@
       isolation: isolate;
     }
 
-    .header::before,
-    .header::after {
-      content: "";
+    .face {
       position: absolute;
-      z-index: -1;
-      border-radius: 50%;
-    }
-
-    .header::before {
       right: 34px;
       top: 28px;
       width: 92px;
       height: 92px;
+      border-radius: 50%;
       background: var(--yellow);
       box-shadow: 0 0 0 12px rgba(255, 255, 255, 0.3);
     }
 
-    .header::after {
-      right: 67px;
-      top: 60px;
+    .face-features {
+      position: absolute;
+      inset: 0;
+    }
+
+    .face-features span {
+      position: absolute;
       width: 10px;
       height: 10px;
+      border-radius: 50%;
       background: var(--ink);
-      box-shadow: 28px 0 var(--ink), 14px 20px var(--ink);
+      will-change: transform;
+    }
+
+    .face-eye-left {
+      left: 25px;
+      top: 32px;
+      animation: leftEyeSurface 7s linear infinite;
+    }
+
+    .face-eye-right {
+      left: 53px;
+      top: 32px;
+      animation: rightEyeSurface 7s linear infinite;
+    }
+
+    .face-features .face-mouth {
+      left: 39px;
+      top: 52px;
+      width: 10px;
+      height: 10px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--ink);
+      animation: mouthSurface 7s linear infinite;
+    }
+
+    @keyframes leftEyeSurface {
+      0%, 28.57% { transform: translate3d(-14px, 0, 0) scale(0.8); }
+      39.29% { transform: translate3d(0, 0, 0) scale(1); }
+      50%, 78.57% { transform: translate3d(21px, 0, 0) scale(1); }
+      89.29% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(-14px, 0, 0) scale(0.8); }
+    }
+
+    @keyframes rightEyeSurface {
+      0%, 28.57% { transform: translate3d(-21px, 0, 0) scale(1); }
+      39.29% { transform: translate3d(0, 0, 0) scale(1); }
+      50%, 78.57% { transform: translate3d(14px, 0, 0) scale(0.8); }
+      89.29% { transform: translate3d(0, 0, 0) scale(1); }
+      100% { transform: translate3d(-21px, 0, 0) scale(1); }
+    }
+
+    @keyframes mouthSurface {
+      0%, 28.57% { transform: translate3d(-16px, 0, 0) scale(0.85, 1); }
+      39.29% { transform: translate3d(0, 0, 0) scale(1, 1); }
+      50%, 78.57% { transform: translate3d(16px, 0, 0) scale(0.85, 1); }
+      89.29% { transform: translate3d(0, 0, 0) scale(1, 1); }
+      100% { transform: translate3d(-16px, 0, 0) scale(0.85, 1); }
     }
 
     .eyebrow {
@@ -178,6 +224,15 @@
     button:hover { background: #ff967e; transform: translateY(-2px); box-shadow: 0 7px 0 var(--coral-dark); }
     button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--coral-dark); }
     button:focus-visible { outline: 4px solid rgba(255, 214, 107, 0.8); outline-offset: 3px; }
+
+    .input-row button {
+      animation: guessButtonPulse 2.2s ease-in-out infinite;
+    }
+
+    @keyframes guessButtonPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
 
     .message {
       min-height: 86px;
@@ -364,8 +419,7 @@
       .game { border-width: 4px; border-radius: 26px; }
       .header, .content { padding-left: 24px; padding-right: 24px; }
       .header { padding-top: 32px; }
-      .header::before { right: 22px; top: 26px; width: 66px; height: 66px; }
-      .header::after { right: 45px; top: 49px; transform: scale(0.75); }
+      .face { right: 22px; top: 26px; zoom: 0.75; }
       .input-row { flex-direction: column; }
       button { min-height: 52px; }
     }
@@ -374,6 +428,13 @@
 <body>
   <main class="game">
     <header class="header">
+      <div class="face" aria-hidden="true">
+        <div class="face-features">
+          <span class="face-eye-left"></span>
+          <span class="face-eye-right"></span>
+          <span class="face-mouth"></span>
+        </div>
+      </div>
       <p class="eyebrow">A little challenge</p>
       <h1>猜數字</h1>
       <p class="subtitle">我已經想好一個數字，試著用最少次數把它找出來吧！建議開聲音</p>
@@ -461,30 +522,12 @@
     function playSoftMusic() {
       if (!backgroundMusic) return;
       backgroundMusic.volume = 0.5;
+      backgroundMusic.loop = true;
       backgroundMusic.play().catch(() => {});
     }
 
     function playScareNoise() {
-      audioContext = audioContext || new (window.AudioContext || window.webkitAudioContext)();
-      const now = audioContext.currentTime;
-      const oscillator = audioContext.createOscillator();
-      const gain = audioContext.createGain();
-      const filter = audioContext.createBiquadFilter();
-      oscillator.type = 'sawtooth';
-      oscillator.frequency.setValueAtTime(75, now);
-      oscillator.frequency.exponentialRampToValueAtTime(620, now + 0.11);
-      oscillator.frequency.exponentialRampToValueAtTime(48, now + 0.9);
-      filter.type = 'lowpass';
-      filter.frequency.setValueAtTime(900, now);
-      filter.frequency.exponentialRampToValueAtTime(180, now + 0.9);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.exponentialRampToValueAtTime(0.5, now + 0.025);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
-      oscillator.connect(filter);
-      filter.connect(gain);
-      gain.connect(audioContext.destination);
-      oscillator.start(now);
-      oscillator.stop(now + 1.05);
+      return;
     }
 
     function showJumpscare() {
@@ -513,8 +556,8 @@
       if (jumpscareVideo.getAttribute('src') !== source) {
         jumpscareVideo.src = source;
       }
-      jumpscareVideo.muted = false;
-      jumpscareVideo.volume = 1;
+      jumpscareVideo.muted = true;
+      jumpscareVideo.volume = 0;
       jumpscareVideo.currentTime = 0;
       jumpscareVideo.play()
         .then(() => {
@@ -533,8 +576,8 @@
       interruptText.innerHTML = '<span>就叫你填1-100</span><br><span>你填那三小</span>';
       interruptOverlay.classList.remove('show');
       interruptOverlay.setAttribute('aria-hidden', 'true');
-      interruptVideo.muted = false;
-      interruptVideo.volume = 1;
+      interruptVideo.muted = true;
+      interruptVideo.volume = 0;
       interruptVideo.currentTime = 0;
 
       interruptVideo.play()
