@@ -38,6 +38,73 @@
       font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
     }
 
+    .start-screen {
+      position: fixed;
+      z-index: 20;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: rgba(63, 49, 83, 0.2);
+      backdrop-filter: blur(8px);
+    }
+
+    .start-panel {
+      width: min(100%, 430px);
+      padding: 52px 34px 42px;
+      border: 6px solid #fff;
+      border-radius: 30px;
+      color: var(--ink);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      text-align: center;
+      animation: startPanelRise 600ms ease-out both;
+    }
+
+    .start-kicker {
+      margin: 0 0 10px;
+      color: #8f5a00;
+      font-family: "Baloo 2", sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+    }
+
+    .start-panel h2 {
+      margin: 0;
+      font-family: "Baloo 2", "Noto Sans TC", sans-serif;
+      font-size: clamp(3rem, 12vw, 4.6rem);
+      line-height: 0.95;
+    }
+
+    .start-panel p {
+      margin: 18px auto 28px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .start-button {
+      min-height: 58px;
+      padding: 0 30px;
+      font-size: 1.08rem;
+      animation: guessButtonPulse 2.2s ease-in-out infinite;
+    }
+
+    .start-screen.is-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 280ms ease;
+    }
+
+    .game.is-locked {
+      visibility: hidden;
+    }
+
+    @keyframes startPanelRise {
+      from { opacity: 0; transform: translateY(18px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     .game {
       width: min(100%, 560px);
       overflow: hidden;
@@ -426,7 +493,16 @@
   </style>
 </head>
 <body>
-  <main class="game">
+  <section class="start-screen" id="start-screen" aria-label="遊戲開始畫面">
+    <div class="start-panel">
+      <p class="start-kicker">A LITTLE CHALLENGE</p>
+      <h2>猜數字</h2>
+      <p>準備好挑戰你的直覺了嗎？</p>
+      <button class="start-button" id="start-button" type="button">點即開始遊戲</button>
+    </div>
+  </section>
+
+  <main class="game is-locked" id="game" aria-hidden="true">
     <header class="header">
       <div class="face" aria-hidden="true">
         <div class="face-features">
@@ -469,6 +545,9 @@
 
   <script>
     const form = document.querySelector('#guess-form');
+    const startScreen = document.querySelector('#start-screen');
+    const startButton = document.querySelector('#start-button');
+    const game = document.querySelector('#game');
     const input = document.querySelector('#guess');
     const message = document.querySelector('#message');
     const attemptsText = document.querySelector('#attempts');
@@ -486,7 +565,7 @@
     let videoIndex = 0;
     const scareVideos = ['scare-1-compatible.mp4', 'scare-2-compatible.mp4'];
     const groundhogClip = '57a03e30-2cc5-40ad-a245-448862f7343e.mp4';
-    const backgroundMusic = new Audio('music-loop.mp4');
+    const backgroundMusic = new Audio('ea4a79e5-9199-45c3-a926-88ed4ad3a63a.mp4');
     backgroundMusic.loop = true;
     backgroundMusic.preload = 'auto';
     backgroundMusic.volume = 0.5;
@@ -521,6 +600,7 @@
 
     function playSoftMusic() {
       if (!backgroundMusic) return;
+      backgroundMusic.muted = false;
       backgroundMusic.volume = 0.5;
       backgroundMusic.loop = true;
       backgroundMusic.play().catch(() => {});
@@ -655,6 +735,14 @@
     resetButton.addEventListener('click', startGame);
     input.addEventListener('input', playSoftMusic, { once: true });
     resetButton.addEventListener('click', playSoftMusic);
+    startButton.addEventListener('click', () => {
+      startGame();
+      game.classList.remove('is-locked');
+      game.setAttribute('aria-hidden', 'false');
+      startScreen.classList.add('is-hidden');
+      playSoftMusic();
+      input.focus();
+    });
     jumpscareVideo.addEventListener('click', () => {
       if (!scareRunning) return;
       videoIndex = (videoIndex + 1) % scareVideos.length;
