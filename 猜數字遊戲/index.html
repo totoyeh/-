@@ -569,6 +569,7 @@
     backgroundMusic.loop = true;
     backgroundMusic.preload = 'auto';
     backgroundMusic.volume = 0.5;
+    const videoVolume = 1;
     let audioContext;
     let musicNodes = [];
     let musicGain;
@@ -615,7 +616,7 @@
       scareRunning = true;
       jumpscare.classList.remove('show');
       jumpscare.setAttribute('aria-hidden', 'true');
-      if (musicGain) stopAudio();
+      stopAudio();
       videoIndex = 0;
       playScareVideo();
     }
@@ -636,8 +637,9 @@
       if (jumpscareVideo.getAttribute('src') !== source) {
         jumpscareVideo.src = source;
       }
-      jumpscareVideo.muted = true;
-      jumpscareVideo.volume = 0;
+      stopAudio();
+      jumpscareVideo.muted = false;
+      jumpscareVideo.volume = videoVolume;
       jumpscareVideo.currentTime = 0;
       jumpscareVideo.play()
         .then(() => {
@@ -656,8 +658,9 @@
       interruptText.innerHTML = '<span>就叫你填1-100</span><br><span>你填那三小</span>';
       interruptOverlay.classList.remove('show');
       interruptOverlay.setAttribute('aria-hidden', 'true');
-      interruptVideo.muted = true;
-      interruptVideo.volume = 0;
+      stopAudio();
+      interruptVideo.muted = false;
+      interruptVideo.volume = videoVolume;
       interruptVideo.currentTime = 0;
 
       interruptVideo.play()
@@ -772,6 +775,7 @@
       interruptOverlay.setAttribute('aria-hidden', 'true');
       interruptVideo.pause();
       interruptVideo.currentTime = 0;
+      playSoftMusic();
 
       const restoreText = lastMessageText || '準備好了嗎？輸入一個數字開始遊戲。';
       const restoreClass = lastMessageClass || 'message';
